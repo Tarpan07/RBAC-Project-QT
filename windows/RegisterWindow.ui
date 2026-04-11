@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RegisterWindow</class>
+ <widget class="QWidget" name="RegisterWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1180</width>
+    <height>820</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Create Account</string>
+  </property>
+  <layout class="QVBoxLayout" name="rootLayout">
+   <property name="leftMargin"><number>24</number></property>
+   <property name="topMargin"><number>24</number></property>
+   <property name="rightMargin"><number>24</number></property>
+   <property name="bottomMargin"><number>24</number></property>
+   <item>
+    <widget class="QFrame" name="shellFrame">
+     <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+     <layout class="QHBoxLayout" name="shellLayout">
+      <property name="spacing"><number>32</number></property>
+      <property name="leftMargin"><number>28</number></property>
+      <property name="topMargin"><number>28</number></property>
+      <property name="rightMargin"><number>28</number></property>
+      <property name="bottomMargin"><number>28</number></property>
+      <item>
+       <widget class="QFrame" name="heroFrame">
+        <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+        <layout class="QVBoxLayout" name="heroLayout">
+         <property name="spacing"><number>18</number></property>
+         <property name="leftMargin"><number>30</number></property>
+         <property name="topMargin"><number>30</number></property>
+         <property name="rightMargin"><number>30</number></property>
+         <property name="bottomMargin"><number>30</number></property>
+         <item><widget class="QLabel" name="eyebrowLabel"><property name="text"><string>Role-aware onboarding  Secure account creation</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+         <item><widget class="QLabel" name="heroTitleLabel"><property name="text"><string>Create your library identity</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+         <item><widget class="QLabel" name="heroCopyLabel"><property name="text"><string>Use the redesigned registration page while keeping the same validation rules for role selection, email checks, and password strength.</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+         <item>
+          <widget class="QFrame" name="orbitFrame">
+           <property name="minimumSize"><size><width>0</width><height>380</height></size></property>
+           <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+           <layout class="QVBoxLayout" name="orbitOuterLayout">
+            <property name="spacing"><number>24</number></property>
+            <property name="leftMargin"><number>24</number></property>
+            <property name="topMargin"><number>24</number></property>
+            <property name="rightMargin"><number>24</number></property>
+            <property name="bottomMargin"><number>24</number></property>
+            <item>
+             <layout class="QHBoxLayout" name="orbitTopLayout">
+              <item><widget class="QLabel" name="studentChip"><property name="text"><string>Student</string></property><property name="alignment"><set>Qt::AlignCenter</set></property></widget></item>
+              <item><spacer name="orbitTopSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+              <item><widget class="QLabel" name="facultyChip"><property name="text"><string>Faculty</string></property><property name="alignment"><set>Qt::AlignCenter</set></property></widget></item>
+             </layout>
+            </item>
+            <item><widget class="QLabel" name="engineLabel"><property name="text"><string>Access Matrix</string></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+            <item>
+             <layout class="QHBoxLayout" name="orbitBottomLayout">
+              <item><widget class="QLabel" name="staffChip"><property name="text"><string>Staff</string></property><property name="alignment"><set>Qt::AlignCenter</set></property></widget></item>
+              <item><spacer name="orbitBottomSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+              <item><widget class="QLabel" name="librarianChip"><property name="text"><string>Librarian</string></property><property name="alignment"><set>Qt::AlignCenter</set></property></widget></item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item><spacer name="heroSpacer"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property></spacer></item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="authWrapFrame">
+        <property name="minimumSize"><size><width>460</width><height>0</height></size></property>
+        <property name="maximumSize"><size><width>540</width><height>16777215</height></size></property>
+        <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+        <layout class="QVBoxLayout" name="authWrapLayout">
+         <property name="leftMargin"><number>0</number></property>
+         <property name="topMargin"><number>0</number></property>
+         <property name="rightMargin"><number>0</number></property>
+         <property name="bottomMargin"><number>0</number></property>
+         <item>
+          <widget class="QScrollArea" name="cardScrollArea">
+           <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+           <property name="widgetResizable"><bool>true</bool></property>
+           <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
+           <widget class="QWidget" name="cardScrollContent">
+            <layout class="QVBoxLayout" name="cardScrollLayout">
+             <property name="leftMargin"><number>0</number></property>
+             <property name="topMargin"><number>0</number></property>
+             <property name="rightMargin"><number>0</number></property>
+             <property name="bottomMargin"><number>0</number></property>
+             <item>
+              <widget class="QFrame" name="cardFrame">
+               <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+               <layout class="QVBoxLayout" name="cardLayout">
+            <property name="spacing"><number>12</number></property>
+            <property name="leftMargin"><number>32</number></property>
+            <property name="topMargin"><number>32</number></property>
+            <property name="rightMargin"><number>32</number></property>
+            <property name="bottomMargin"><number>32</number></property>
+            <item alignment="Qt::AlignHCenter">
+             <widget class="QFrame" name="iconFrame">
+              <property name="minimumSize"><size><width>72</width><height>72</height></size></property>
+              <property name="maximumSize"><size><width>72</width><height>72</height></size></property>
+              <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+              <layout class="QVBoxLayout" name="iconLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="iconLabel"><property name="text"><string>UP</string></property><property name="alignment"><set>Qt::AlignCenter</set></property></widget></item>
+              </layout>
+             </widget>
+            </item>
+            <item><widget class="QLabel" name="titleLabel"><property name="text"><string>Create account</string></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+            <item><widget class="QLabel" name="subtitleLabel"><property name="text"><string>Register on a dedicated screen, with the same backend validation rules preserved under the hood.</string></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+            <item><widget class="QLabel" name="nameLabel"><property name="text"><string>Full name</string></property></widget></item>
+            <item><widget class="QLineEdit" name="nameEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="placeholderText"><string>Your name</string></property></widget></item>
+            <item><widget class="QLabel" name="emailLabel"><property name="text"><string>Email</string></property></widget></item>
+            <item><widget class="QLineEdit" name="emailEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="placeholderText"><string>name@example.com</string></property></widget></item>
+            <item>
+             <layout class="QHBoxLayout" name="roleIdLayout">
+              <property name="spacing"><number>14</number></property>
+              <item>
+               <layout class="QVBoxLayout" name="roleLayout">
+                <item><widget class="QLabel" name="roleLabel"><property name="text"><string>Role</string></property></widget></item>
+                <item>
+                 <widget class="QComboBox" name="roleCombo">
+                  <property name="minimumSize"><size><width>0</width><height>52</height></size></property>
+                  <item><property name="text"><string>Student</string></property></item>
+                  <item><property name="text"><string>Faculty</string></property></item>
+                  <item><property name="text"><string>Librarian</string></property></item>
+                  <item><property name="text"><string>Staff</string></property></item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="idLayout">
+                <item><widget class="QLabel" name="studentIdLabel"><property name="text"><string>Student ID</string></property></widget></item>
+                <item><widget class="QLineEdit" name="studentIdEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="placeholderText"><string>Required for students</string></property></widget></item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item><widget class="QLabel" name="passwordLabel"><property name="text"><string>Password</string></property></widget></item>
+            <item><widget class="QLineEdit" name="passwordEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="placeholderText"><string>Create a strong password</string></property></widget></item>
+            <item><widget class="QLabel" name="confirmPasswordLabel"><property name="text"><string>Confirm password</string></property></widget></item>
+            <item><widget class="QLineEdit" name="confirmPasswordEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="placeholderText"><string>Repeat password</string></property></widget></item>
+            <item><widget class="QPushButton" name="registerButton"><property name="minimumSize"><size><width>0</width><height>58</height></size></property><property name="text"><string>Create Account</string></property></widget></item>
+            <item><widget class="QPushButton" name="backButton"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="text"><string>Back to Login</string></property></widget></item>
+            <item><widget class="QLabel" name="statusLabel"><property name="text"><string/></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

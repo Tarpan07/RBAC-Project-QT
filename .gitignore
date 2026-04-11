@@ -1,0 +1,10 @@
+*.pro.user
+build/
+debug/
+release/
+moc_*
+ui_*
+qrc_*
+CMakeFiles/
+CMakeCache.txt
+Makefile
