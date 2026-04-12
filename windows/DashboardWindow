@@ -1,0 +1,10 @@
+#ifndef DASHBOARDWINDOW_H
+#define DASHBOARDWINDOW_H
+
+class DashboardWindow
+{
+public:
+    DashboardWindow();
+};
+
+#endif // DASHBOARDWINDOW_H

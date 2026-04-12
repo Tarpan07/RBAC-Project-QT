@@ -66,7 +66,7 @@ void AuthManager::loadUsers()
 // ================= EMAIL VALIDATION =================
 bool AuthManager::isValidStudentEmail(string email)
 {
-    string domain = "@nits.ac.in";
+    string domain = "nits.ac.in";
 
     if (email.size() >= domain.size() &&
         email.substr(email.size() - domain.size()) == domain)

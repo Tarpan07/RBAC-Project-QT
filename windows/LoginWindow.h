@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "../services/AuthService.h"
+#include "../models/User.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class LoginWindow; }

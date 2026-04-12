@@ -3,6 +3,7 @@
 
 #include <string>
 #include "AuthManager.h"
+#include "../models/User.h"
 
 using namespace std;
 
@@ -12,12 +13,14 @@ private:
 
 public:
     bool login(string email, string password);
-
-    // 🔥 UPDATED → returns string (error message or SUCCESS)
     string registerUser(string name, string email, string password,
                         string role, string studentID);
-
     void logout();
+
+    // ✅ NEW - needed by LoginWindow
+    User* getCurrentUser() {
+        return authManager.getCurrentUser();
+    }
 };
 
 #endif

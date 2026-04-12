@@ -1,6 +1,7 @@
 #include "LoginWindow.h"
 #include "ui_LoginWindow.h"
 #include "RegisterWindow.h"
+#include "DashboardWindow.h"
 
 #include <QGuiApplication>
 #include <QResizeEvent>
@@ -218,8 +219,13 @@ void LoginWindow::handleLogin()
     bool success = authService.login(email, password);
 
     if (success) {
-        ui->statusLabel->setStyleSheet("color: #1f6f54; background: transparent; border: none;");
-        ui->statusLabel->setText("Login successful!");
+        User* user = authService.getCurrentUser();
+        DashboardWindow* dash = new DashboardWindow(
+            QString::fromStdString(user->getName()),
+            QString::fromStdString(user->getRole())
+            );
+        dash->show();
+        this->close();
     } else {
         ui->statusLabel->setStyleSheet("color: #ac4f2d; background: transparent; border: none;");
         ui->statusLabel->setText("Invalid email or password.");

@@ -41,6 +41,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         services/PasswordUtil.cpp
         windows/LoginWindow.ui
         windows/RegisterWindow.ui
+        models/Book.h models/Book.cpp
+        services/LibraryService.h services/LibraryService.cpp
+        services/StorageManager.h services/StorageManager.cpp
+        services/AuditLogger.h services/AuditLogger.cpp
+        services/PermissionStub.h
+        windows/Dashboardwindow.cpp
+        windows/Dashboardwindow.h windows/Dashboardwindow.cpp
+        windows/dashboardwindow.h windows/dashboardwindow.cpp windows/dashboardwindow.ui
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET RBAC_Library_System APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
