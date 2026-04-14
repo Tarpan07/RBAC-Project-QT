@@ -10,17 +10,14 @@ QT_END_NAMESPACE
 
 class RegisterWindow : public QWidget
 {
-    Q_OBJECT
-
 public:
     explicit RegisterWindow(QWidget *parent = nullptr);
     ~RegisterWindow();
 
-private slots:
+private:
     void handleRegister();
     void goBack();
 
-private:
     void resizeEvent(QResizeEvent *event) override;
     void applyResponsiveLayout();
 

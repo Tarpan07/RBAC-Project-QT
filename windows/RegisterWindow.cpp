@@ -22,6 +22,11 @@ RegisterWindow::RegisterWindow(QWidget *parent)
     move((sg.width() - width()) / 2, (sg.height() - height()) / 2);
 
     ui->iconFrame->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    int librarianIndex = ui->roleCombo->findText("Librarian", Qt::MatchFixedString);
+    if (librarianIndex >= 0) {
+        ui->roleCombo->removeItem(librarianIndex);
+    }
+    ui->librarianChip->setVisible(false);
     ui->engineLabel->setAlignment(Qt::AlignCenter);
     ui->orbitOuterLayout->setAlignment(ui->engineLabel, Qt::AlignHCenter);
     ui->orbitOuterLayout->setStretch(0, 1);

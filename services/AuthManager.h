@@ -22,6 +22,8 @@ private:
 
     void saveUsers();
     void loadUsers();
+    void seedDebugUsers();
+    bool emailExists(const string &email) const;
 
     bool isValidStudentEmail(string email);
 

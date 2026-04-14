@@ -1,7 +1,7 @@
 #include "LoginWindow.h"
 #include "ui_LoginWindow.h"
 #include "RegisterWindow.h"
-#include "DashboardWindow.h"
+#include "Dashboardwindow.h"
 
 #include <QGuiApplication>
 #include <QResizeEvent>
@@ -222,7 +222,9 @@ void LoginWindow::handleLogin()
         User* user = authService.getCurrentUser();
         DashboardWindow* dash = new DashboardWindow(
             QString::fromStdString(user->getName()),
-            QString::fromStdString(user->getRole())
+            QString::fromStdString(user->getRole()),
+            QString::fromStdString(user->getEmail()),
+            QString::fromStdString(user->getStudentID())
             );
         dash->show();
         this->close();

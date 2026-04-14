@@ -1,73 +1,259 @@
 #include "LibraryService.h"
+#include "DatabaseManager.h"
+
+#include <QDate>
+#include <QSqlQuery>
+#include <QVariant>
+#include <algorithm>
+#include <cctype>
+
 using namespace std;
 
-LibraryService::LibraryService() {
+namespace {
+QString qstr(const string &value)
+{
+    return QString::fromStdString(value);
+}
+
+string upperRole(string role)
+{
+    transform(role.begin(), role.end(), role.begin(), ::toupper);
+    return role;
+}
+}
+
+LibraryService::LibraryService()
+{
     books = storage.loadBooks();
 }
 
-string LibraryService::addBook(const string& userRole, const string& userName,
-                               const string& bookId, const string& title,
-                               const string& author) {
-    if (!PermissionEngine::checkAccess(userRole, "ADD_BOOK")) {
+string LibraryService::addBook(const string& userRole,
+                               const string& userName,
+                               const string& bookId,
+                               const string& title,
+                               const string& author,
+                               int totalCount,
+                               const string &coverPath)
+{
+    if (!PermissionEngine::checkAccess(upperRole(userRole), "ADD_BOOK")) {
         AuditLogger::getInstance().log(userName, "ADD_BOOK", "DENIED");
         return "Access denied";
     }
-    for (auto& b : books)
-        if (b.getBookId() == bookId) return "Book ID already exists";
 
-    books.emplace_back(bookId, title, author, true);
-    storage.saveBooks(books);
+    if (bookId.empty() || title.empty() || author.empty() || totalCount <= 0) {
+        return "Enter book id, title, author, and a valid count";
+    }
+
+    for (auto& b : storage.loadBooks()) {
+        if (b.getBookId() == bookId) {
+            return "Book ID already exists";
+        }
+    }
+
+    if (!storage.addBook(Book(bookId, title, author, totalCount, totalCount, coverPath))) {
+        return "Could not add book";
+    }
+
+    books = storage.loadBooks();
     AuditLogger::getInstance().log(userName, "ADD_BOOK", "SUCCESS");
     return "SUCCESS";
 }
 
-string LibraryService::issueBook(const string& userRole, const string& userName,
-                                 const string& bookId) {
-    if (!PermissionEngine::checkAccess(userRole, "ISSUE_BOOK")) {
+string LibraryService::updateBook(const string& userRole,
+                                  const string& userName,
+                                  const string& bookId,
+                                  const string& title,
+                                  const string& author,
+                                  int totalCount,
+                                  int availableCount,
+                                  const string &coverPath)
+{
+    if (!PermissionEngine::checkAccess(upperRole(userRole), "UPDATE_BOOK")) {
+        AuditLogger::getInstance().log(userName, "UPDATE_BOOK", "DENIED");
+        return "Access denied";
+    }
+
+    if (bookId.empty() || title.empty() || author.empty() || totalCount < 0 || availableCount < 0 ||
+        availableCount > totalCount) {
+        return "Enter valid book details";
+    }
+
+    if (!storage.updateBook(bookId, title, author, totalCount, availableCount, coverPath)) {
+        return "Could not update book";
+    }
+
+    books = storage.loadBooks();
+    AuditLogger::getInstance().log(userName, "UPDATE_BOOK", "SUCCESS");
+    return "SUCCESS";
+}
+
+string LibraryService::deleteBook(const string& userRole, const string& userName, const string& bookId)
+{
+    if (!PermissionEngine::checkAccess(upperRole(userRole), "DELETE_BOOK")) {
+        AuditLogger::getInstance().log(userName, "DELETE_BOOK", "DENIED");
+        return "Access denied";
+    }
+
+    if (!storage.deleteBook(bookId)) {
+        return "Could not delete book";
+    }
+
+    books = storage.loadBooks();
+    AuditLogger::getInstance().log(userName, "DELETE_BOOK", "SUCCESS");
+    return "SUCCESS";
+}
+
+string LibraryService::issueBook(const string& userRole, const string& userName, const string& bookId)
+{
+    const string role = upperRole(userRole);
+    if (!PermissionEngine::checkAccess(role, "ISSUE_BOOK")) {
         AuditLogger::getInstance().log(userName, "ISSUE_BOOK", "DENIED");
         return "Access denied";
     }
-    for (auto& b : books) {
-        if (b.getBookId() == bookId) {
-            if (!b.isAvailable()) return "Book not available";
-            b.setAvailable(false);
-            storage.saveBooks(books);
-            AuditLogger::getInstance().log(userName, "ISSUE_BOOK", "SUCCESS");
-            return "SUCCESS";
+
+    QSqlQuery duplicateCheck(DatabaseManager::database());
+    duplicateCheck.prepare("SELECT COUNT(*) FROM borrow_records WHERE user_email = ? AND book_id = ? "
+                           "AND status = 'ISSUED'");
+    duplicateCheck.addBindValue(qstr(userName));
+    duplicateCheck.addBindValue(qstr(bookId));
+    if (duplicateCheck.exec() && duplicateCheck.next() && duplicateCheck.value(0).toInt() > 0) {
+        return "You already issued this book";
+    }
+
+    if (activeIssueCount(userName) >= RoleManager::issueLimit(role)) {
+        return "Issue limit reached";
+    }
+
+    Book selected("", "", "", false);
+    bool found = false;
+    for (auto &book : storage.loadBooks()) {
+        if (book.getBookId() == bookId) {
+            selected = book;
+            found = true;
+            break;
         }
     }
-    return "Book not found";
+
+    if (!found) {
+        return "Book not found";
+    }
+    if (selected.getAvailableCount() <= 0) {
+        return "Book not available";
+    }
+
+    QSqlDatabase db = DatabaseManager::database();
+    db.transaction();
+
+    QSqlQuery borrow(db);
+    borrow.prepare("INSERT INTO borrow_records (user_email, book_id, issue_date, status) VALUES (?, ?, ?, 'ISSUED')");
+    borrow.addBindValue(qstr(userName));
+    borrow.addBindValue(qstr(bookId));
+    borrow.addBindValue(QDate::currentDate().toString(Qt::ISODate));
+
+    if (!borrow.exec() || !storage.changeAvailableCount(bookId, -1)) {
+        db.rollback();
+        return "Could not issue book";
+    }
+
+    db.commit();
+    books = storage.loadBooks();
+    AuditLogger::getInstance().log(userName, "ISSUE_BOOK", "SUCCESS");
+    return "SUCCESS";
 }
 
-string LibraryService::returnBook(const string& userRole, const string& userName,
-                                  const string& bookId) {
-    if (!PermissionEngine::checkAccess(userRole, "RETURN_BOOK")) {
+string LibraryService::returnBook(const string& userRole, const string& userName, const string& bookId)
+{
+    if (!PermissionEngine::checkAccess(upperRole(userRole), "RETURN_BOOK")) {
         AuditLogger::getInstance().log(userName, "RETURN_BOOK", "DENIED");
         return "Access denied";
     }
-    for (auto& b : books) {
-        if (b.getBookId() == bookId) {
-            b.setAvailable(true);
-            storage.saveBooks(books);
-            AuditLogger::getInstance().log(userName, "RETURN_BOOK", "SUCCESS");
-            return "SUCCESS";
-        }
+
+    QSqlDatabase db = DatabaseManager::database();
+    QSqlQuery find(db);
+    find.prepare("SELECT id FROM borrow_records WHERE user_email = ? AND book_id = ? AND status = 'ISSUED' "
+                 "ORDER BY id DESC LIMIT 1");
+    find.addBindValue(qstr(userName));
+    find.addBindValue(qstr(bookId));
+
+    if (!find.exec() || !find.next()) {
+        return "No active issue found";
     }
-    return "Book not found";
+
+    const int recordId = find.value(0).toInt();
+    db.transaction();
+
+    QSqlQuery ret(db);
+    ret.prepare("UPDATE borrow_records SET status = 'RETURNED', return_date = ? WHERE id = ?");
+    ret.addBindValue(QDate::currentDate().toString(Qt::ISODate));
+    ret.addBindValue(recordId);
+
+    if (!ret.exec() || !storage.changeAvailableCount(bookId, 1)) {
+        db.rollback();
+        return "Could not return book";
+    }
+
+    db.commit();
+    books = storage.loadBooks();
+    AuditLogger::getInstance().log(userName, "RETURN_BOOK", "SUCCESS");
+    return "SUCCESS";
 }
 
-vector<Book> LibraryService::searchBook(const string& keyword) {
+vector<Book> LibraryService::searchBook(const string& keyword)
+{
     vector<Book> results;
-    for (auto& b : books) {
-        if (b.getTitle().find(keyword) != string::npos ||
-            b.getAuthor().find(keyword) != string::npos ||
-            b.getBookId().find(keyword) != string::npos) {
+    const string needle = keyword;
+
+    for (auto& b : storage.loadBooks()) {
+        if (needle.empty() ||
+            b.getTitle().find(needle) != string::npos ||
+            b.getAuthor().find(needle) != string::npos ||
+            b.getBookId().find(needle) != string::npos) {
             results.push_back(b);
         }
     }
+
     return results;
 }
 
-vector<Book> LibraryService::getAllBooks() {
-    return books;
+vector<Book> LibraryService::getAllBooks()
+{
+    return storage.loadBooks();
+}
+
+vector<Book> LibraryService::getBorrowedBooks(const string &userName)
+{
+    vector<Book> borrowed;
+    QSqlQuery query(DatabaseManager::database());
+    query.prepare("SELECT b.book_id, b.title, b.author, b.cover_path, b.total_count, b.available_count "
+                  "FROM borrow_records r "
+                  "JOIN books b ON b.book_id = r.book_id "
+                  "WHERE r.user_email = ? AND r.status = 'ISSUED' "
+                  "ORDER BY r.issue_date DESC");
+    query.addBindValue(qstr(userName));
+
+    if (!query.exec()) {
+        return borrowed;
+    }
+
+    while (query.next()) {
+        borrowed.emplace_back(query.value(0).toString().toStdString(),
+                              query.value(1).toString().toStdString(),
+                              query.value(2).toString().toStdString(),
+                              query.value(4).toInt(),
+                              query.value(5).toInt(),
+                              query.value(3).toString().toStdString());
+    }
+
+    return borrowed;
+}
+
+int LibraryService::activeIssueCount(const string &userName)
+{
+    QSqlQuery query(DatabaseManager::database());
+    query.prepare("SELECT COUNT(*) FROM borrow_records WHERE user_email = ? AND status = 'ISSUED'");
+    query.addBindValue(qstr(userName));
+    if (!query.exec() || !query.next()) {
+        return 0;
+    }
+    return query.value(0).toInt();
 }

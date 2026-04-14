@@ -1,100 +1,67 @@
 #include "UserRepository.h"
-#include "../models/User.h"
-#include <fstream>
-#include <sstream>
+#include "DatabaseManager.h"
+
+#include <QSqlQuery>
+#include <QVariant>
+
 using namespace std;
 
-//  Save new user to file
-bool UserRepository::saveUser(const User& user) {
-    ofstream file("users.txt", ios::app);
-    if (!file) return false;
-
-    file << user.getName() << ","
-         << user.getEmail() << ","
-         << user.getRole() << ","
-         << user.getStudentID() << ","
-         << user.getPasswordHash() << "\n";
-
-    file.close();
-    return true;
+namespace {
+QString qstr(const string &value)
+{
+    return QString::fromStdString(value);
+}
 }
 
-//  Find user by email (used for login)
-User* UserRepository::findByEmail(const string& email) {
-    ifstream file("users.txt");
-    if (!file) return nullptr;
+bool UserRepository::saveUser(const User& user)
+{
+    QSqlQuery query(DatabaseManager::database());
+    query.prepare("INSERT INTO users (email, name, role, student_id, password_hash) VALUES (?, ?, ?, ?, ?)");
+    query.addBindValue(qstr(user.getEmail()));
+    query.addBindValue(qstr(user.getName()));
+    query.addBindValue(qstr(user.getRole()));
+    query.addBindValue(qstr(user.getStudentID()));
+    query.addBindValue(qstr(user.getPasswordHash()));
+    return query.exec();
+}
 
-    string line;
-
-    while (getline(file, line)) {
-        stringstream ss(line);
-
-        string name, mail, role, studentID, password;
-
-        getline(ss, name, ',');
-        getline(ss, mail, ',');
-        getline(ss, role, ',');
-        getline(ss, studentID, ',');
-        getline(ss, password); // last field
-
-        if (mail == email) {
-            file.close();
-            return new User(name, mail, role, studentID, password);
-        }
+User* UserRepository::findByEmail(const string& email)
+{
+    QSqlQuery query(DatabaseManager::database());
+    query.prepare("SELECT name, email, role, student_id, password_hash FROM users WHERE email = ?");
+    query.addBindValue(qstr(email));
+    if (!query.exec() || !query.next()) {
+        return nullptr;
     }
 
-    file.close();
-    return nullptr;
+    return new User(query.value(0).toString().toStdString(),
+                    query.value(1).toString().toStdString(),
+                    query.value(2).toString().toStdString(),
+                    query.value(3).toString().toStdString(),
+                    query.value(4).toString().toStdString());
 }
 
-//  Get all users (useful for admin/debug)
-vector<User> UserRepository::getAllUsers() {
+vector<User> UserRepository::getAllUsers()
+{
     vector<User> users;
+    QSqlQuery query(DatabaseManager::database());
+    query.exec("SELECT name, email, role, student_id, password_hash FROM users ORDER BY name");
 
-    ifstream file("users.txt");
-    if (!file) return users;
-
-    string line;
-
-    while (getline(file, line)) {
-        stringstream ss(line);
-
-        string name, mail, role, studentID, password;
-
-        getline(ss, name, ',');
-        getline(ss, mail, ',');
-        getline(ss, role, ',');
-        getline(ss, studentID, ',');
-        getline(ss, password);
-
-        users.emplace_back(name, mail, role, studentID, password);
+    while (query.next()) {
+        users.emplace_back(query.value(0).toString().toStdString(),
+                           query.value(1).toString().toStdString(),
+                           query.value(2).toString().toStdString(),
+                           query.value(3).toString().toStdString(),
+                           query.value(4).toString().toStdString());
     }
 
-    file.close();
     return users;
 }
 
-//  Check if email already exists (for registration)
-bool UserRepository::emailExists(const string& email) {
-    ifstream file("users.txt");
-    if (!file) return false;
-
-    string line;
-
-    while (getline(file, line)) {
-        stringstream ss(line);
-
-        string name, mail;
-
-        getline(ss, name, ',');
-        getline(ss, mail, ',');
-
-        if (mail == email) {
-            file.close();
-            return true;
-        }
-    }
-
-    file.close();
-    return false;
+bool UserRepository::emailExists(const string& email)
+{
+    QSqlQuery query(DatabaseManager::database());
+    query.prepare("SELECT 1 FROM users WHERE email = ? LIMIT 1");
+    query.addBindValue(qstr(email));
+    return query.exec() && query.next();
 }

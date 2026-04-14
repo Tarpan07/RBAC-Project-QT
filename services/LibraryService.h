@@ -17,7 +17,12 @@ public:
     LibraryService();
 
     string addBook(const string& userRole, const string& userName,
-                   const string& bookId, const string& title, const string& author);
+                   const string& bookId, const string& title, const string& author,
+                   int totalCount = 1, const string &coverPath = "");
+    string updateBook(const string& userRole, const string& userName,
+                      const string& bookId, const string& title, const string& author,
+                      int totalCount, int availableCount, const string &coverPath = "");
+    string deleteBook(const string& userRole, const string& userName, const string& bookId);
 
     string issueBook(const string& userRole, const string& userName,
                      const string& bookId);
@@ -27,5 +32,7 @@ public:
 
     vector<Book> searchBook(const string& keyword);
     vector<Book> getAllBooks();
+    vector<Book> getBorrowedBooks(const string &userName);
+    int activeIssueCount(const string &userName);
 };
 #endif
