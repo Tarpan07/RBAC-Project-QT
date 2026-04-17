@@ -85,7 +85,8 @@ private:
     QLabel *pageTitleLabel = nullptr;
     QLabel *statusLabel = nullptr;
 
-    QVBoxLayout *dashboardLayout = nullptr;
+    QScrollArea *dashboardScroll = nullptr;
+    QWidget    *dashboardContainer = nullptr;
     QLabel *profileIssueCountLabel = nullptr;
     QLabel *profileIssueLimitLabel = nullptr;
 

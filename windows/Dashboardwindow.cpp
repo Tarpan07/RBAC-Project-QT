@@ -50,13 +50,13 @@ DashboardWindow::DashboardWindow(QString userName,
                                  QString studentId,
                                  QWidget *parent)
     : QDialog(parent),
-      userName(userName.toStdString()),
-      userRole(normalizeRole(userRole).toStdString()),
-      userEmail(userEmail.toStdString()),
-      displayName(userName),
-      displayRole(normalizeRole(userRole)),
-      displayEmail(userEmail),
-      displayStudentId(studentId)
+    userName(userName.toStdString()),
+    userRole(normalizeRole(userRole).toStdString()),
+    userEmail(userEmail.toStdString()),
+    displayName(userName),
+    displayRole(normalizeRole(userRole)),
+    displayEmail(userEmail),
+    displayStudentId(studentId)
 {
     setObjectName("DashboardWindow");
     setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
@@ -163,9 +163,19 @@ QPushButton *DashboardWindow::createNavButton(const QString &text, PageIndex pag
 QWidget *DashboardWindow::buildDashboardPage()
 {
     auto *page = new QWidget;
-    dashboardLayout = new QVBoxLayout(page);
-    dashboardLayout->setContentsMargins(0, 0, 0, 0);
-    dashboardLayout->setSpacing(12);
+    auto *pageLayout = new QVBoxLayout(page);
+    pageLayout->setContentsMargins(0, 0, 0, 0);
+    pageLayout->setSpacing(0);
+
+    dashboardScroll = new QScrollArea;
+    dashboardScroll->setObjectName("plainScroll");
+    dashboardScroll->setWidgetResizable(true);
+    dashboardScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // Container will be replaced on every refresh
+    dashboardContainer = new QWidget;
+    dashboardScroll->setWidget(dashboardContainer);
+    pageLayout->addWidget(dashboardScroll, 1);
     return page;
 }
 
@@ -376,7 +386,7 @@ QWidget *DashboardWindow::createStatCard(const QString &value, const QString &la
 QWidget *DashboardWindow::createBookCard(const Book &book, bool featured, bool alreadyIssued)
 {
     auto *card = makeFrame(featured ? "bookCardFeatured" : "bookCard");
-    card->setMinimumHeight(featured ? 250 : 210);
+    card->setFixedHeight(featured ? 260 : 220);
     card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     auto *layout = new QVBoxLayout(card);
@@ -397,8 +407,21 @@ QWidget *DashboardWindow::createBookCard(const Book &book, bool featured, bool a
     auto *row = new QHBoxLayout;
     const bool canIssueBook = book.getAvailableCount() > 0 && !alreadyIssued;
     auto *issueButton = new QPushButton(canIssueBook ? "Issue" : (alreadyIssued ? "Already Issued" : "Unavailable"));
-    issueButton->setObjectName(canIssueBook ? "issueButton" : "ghostButton");
+    issueButton->setObjectName("issueButton");
     issueButton->setEnabled(canIssueBook);
+    if (!canIssueBook) {
+        issueButton->setStyleSheet(
+            "QPushButton#issueButton, QPushButton#issueButton:disabled {"
+            "  background: rgba(210, 205, 195, 200);"
+            "  color: #8a8278;"
+            "  border: none;"
+            "  border-radius: 10px;"
+            "  padding: 8px 14px;"
+            "  font-size: 13px;"
+            "  font-weight: 800;"
+            "}"
+            );
+    }
     connect(issueButton, &QPushButton::clicked, this, [this, book]() {
         if (!confirmAction("Confirm Issue",
                            "Issue \"" + QString::fromStdString(book.getTitle()) + "\" to your account?")) {
@@ -508,10 +531,14 @@ void DashboardWindow::refreshAll()
 
 void DashboardWindow::refreshDashboard()
 {
-    while (auto *item = dashboardLayout->takeAt(0)) {
-        if (item->widget()) delete item->widget();
-        delete item;
-    }
+    // Delete old container and replace — avoids all nested layout deletion issues
+    delete dashboardContainer;
+    dashboardContainer = new QWidget;
+    dashboardScroll->setWidget(dashboardContainer);
+
+    auto *dashboardLayout = new QVBoxLayout(dashboardContainer);
+    dashboardLayout->setContentsMargins(0, 4, 0, 12);
+    dashboardLayout->setSpacing(12);
 
     const auto books = libraryService.getAllBooks();
     const auto borrowed = libraryService.getBorrowedBooks(userEmail);
@@ -532,7 +559,7 @@ void DashboardWindow::refreshDashboard()
     heroLayout->addWidget(makeLabel("Welcome back, " + displayName, "heroTitle"));
     heroLayout->addWidget(makeLabel(
         "You have " + QString::number(borrowed.size()) + " active issue(s). "
-        + QString::number(availableCopies) + " copies are available across the library.",
+            + QString::number(availableCopies) + " copies are available across the library.",
         "heroSubtitle"));
     heroLayout->addWidget(makeLabel("Track top books and your current issues from here.", "heroSubtitle"));
     dashboardLayout->addWidget(heroCard);
@@ -1022,8 +1049,17 @@ void DashboardWindow::applyTheme()
             color: #fffaf0;
         }
         QPushButton#issueButton {
-            background: #1f6f54;
+            background: #0f3f31;
             color: #fffaf0;
+            min-width: 90px;
+            min-height: 34px;
+        }
+        QPushButton#issueButton:hover {
+            background: #1f6f54;
+        }
+        QPushButton#issueButton:disabled {
+            background: rgba(210, 205, 195, 200);
+            color: #8a8278;
         }
         QPushButton#secondaryButton {
             background: rgba(236, 224, 201, 225);
@@ -1037,14 +1073,17 @@ void DashboardWindow::applyTheme()
             background: #efdccf;
             color: #9b5138;
         }
-        QPushButton#primaryButton:hover, QPushButton#issueButton:hover {
+        QPushButton#primaryButton:hover {
             background: #14533f;
+        }
+        QPushButton#secondaryButton:hover {
+            background: rgba(210, 198, 175, 225);
         }
         QScrollArea#plainScroll {
             border: none;
             background: transparent;
         }
-        QScrollArea#plainScroll QWidget {
+        QScrollArea#plainScroll > QWidget > QWidget {
             background: transparent;
         }
     )");
