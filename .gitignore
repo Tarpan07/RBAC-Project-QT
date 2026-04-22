@@ -1,10 +1,56 @@
-*.pro.user
+# -----------------------------
+# Build files
+# -----------------------------
 build/
-debug/
-release/
-moc_*
-ui_*
-qrc_*
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dll
+*.so
+*.a
+
+# -----------------------------
+# CMake files
+# -----------------------------
 CMakeFiles/
 CMakeCache.txt
+cmake_install.cmake
 Makefile
+
+# -----------------------------
+# Qt Creator files (VERY IMPORTANT)
+# -----------------------------
+*.pro.user
+*.pro.user.*
+*.pri.user
+*.user
+
+.qtcreator/
+
+# -----------------------------
+# Qt build artifacts
+# -----------------------------
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# -----------------------------
+# Logs & temp files
+# -----------------------------
+*.log
+*.tmp
+*.temp
+
+# -----------------------------
+# OS files
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# IDE files
+# -----------------------------
+.vscode/
+.idea/

@@ -53,6 +53,7 @@ private:
     QWidget *buildUsersPage();
     QWidget *createBookCard(const Book &book, bool featured = false, bool alreadyIssued = false);
     QWidget *createBorrowedCard(const Book &book);
+    QWidget *createBorrowRecordCard(const BorrowRecord &record, bool showUser = false);
     QWidget *createUserCard(const QString &name, const QString &email, const QString &role, const QString &studentId);
     QWidget *createStatCard(const QString &value, const QString &label);
     QPushButton *createNavButton(const QString &text, PageIndex page);
@@ -71,6 +72,7 @@ private:
     bool canManageUsers() const;
     bool confirmAction(const QString &title, const QString &message);
     QString normalizeRole(const QString &role) const;
+    QString formatRecordTimeline(const BorrowRecord &record) const;
 
     std::string userName;
     std::string userRole;
@@ -99,7 +101,8 @@ private:
     QLineEdit *bookAvailableEdit = nullptr;
     QScrollArea *booksScrollArea = nullptr;
 
-    QVBoxLayout *myBooksLayout = nullptr;
+    QVBoxLayout *activeBooksLayout = nullptr;
+    QVBoxLayout *historyLayout = nullptr;
 
     QLabel *profileNameLabel = nullptr;
     QLabel *profileRoleLabel = nullptr;
@@ -112,7 +115,10 @@ private:
     QLineEdit *userEmailEdit = nullptr;
     QLineEdit *userRoleEdit = nullptr;
     QLineEdit *userStudentIdEdit = nullptr;
+    QLabel *selectedUserHistoryTitle = nullptr;
+    QVBoxLayout *userHistoryLayout = nullptr;
     QString selectedUserEmail;
+    QString selectedUserName;
 
     std::map<PageIndex, QPushButton *> navButtons;
 };

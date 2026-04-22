@@ -8,6 +8,17 @@
 #include <string>
 using namespace std;
 
+struct BorrowRecord {
+    string userEmail;
+    string userName;
+    string bookId;
+    string title;
+    string author;
+    string issueDate;
+    string returnDate;
+    string status;
+};
+
 class LibraryService {
 private:
     vector<Book> books;
@@ -33,6 +44,8 @@ public:
     vector<Book> searchBook(const string& keyword);
     vector<Book> getAllBooks();
     vector<Book> getBorrowedBooks(const string &userName);
+    vector<BorrowRecord> getActiveBorrowRecords(const string &userName = "");
+    vector<BorrowRecord> getBorrowHistory(const string &userName = "");
     int activeIssueCount(const string &userName);
 };
 #endif

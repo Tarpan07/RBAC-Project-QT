@@ -2,6 +2,7 @@
 #define LOGINWINDOW_H
 
 #include <QWidget>
+#include <QResizeEvent>
 #include "../services/AuthService.h"
 #include "../models/User.h"
 

@@ -20,6 +20,57 @@ string upperRole(string role)
     transform(role.begin(), role.end(), role.begin(), ::toupper);
     return role;
 }
+
+vector<BorrowRecord> loadBorrowRecords(const string &userName, bool activeOnly)
+{
+    vector<BorrowRecord> records;
+    QSqlQuery query(DatabaseManager::database());
+
+    QString sql =
+        "SELECT r.user_email, COALESCE(u.name, r.user_email), r.book_id, "
+        "COALESCE(b.title, r.book_id), COALESCE(b.author, ''), "
+        "r.issue_date, COALESCE(r.return_date, ''), r.status "
+        "FROM borrow_records r "
+        "LEFT JOIN books b ON b.book_id = r.book_id "
+        "LEFT JOIN users u ON u.email = r.user_email ";
+    if (!userName.empty() || activeOnly) {
+        sql += "WHERE ";
+    }
+    if (!userName.empty()) {
+        sql += "r.user_email = ?";
+    }
+    if (!userName.empty() && activeOnly) {
+        sql += " AND ";
+    }
+    if (activeOnly) {
+        sql += "r.status = 'ISSUED'";
+    }
+    sql += " ORDER BY r.id DESC";
+
+    query.prepare(sql);
+    if (!userName.empty()) {
+        query.addBindValue(qstr(userName));
+    }
+
+    if (!query.exec()) {
+        return records;
+    }
+
+    while (query.next()) {
+        BorrowRecord record;
+        record.userEmail = query.value(0).toString().toStdString();
+        record.userName = query.value(1).toString().toStdString();
+        record.bookId = query.value(2).toString().toStdString();
+        record.title = query.value(3).toString().toStdString();
+        record.author = query.value(4).toString().toStdString();
+        record.issueDate = query.value(5).toString().toStdString();
+        record.returnDate = query.value(6).toString().toStdString();
+        record.status = query.value(7).toString().toStdString();
+        records.push_back(record);
+    }
+
+    return records;
+}
 }
 
 LibraryService::LibraryService()
@@ -245,6 +296,16 @@ vector<Book> LibraryService::getBorrowedBooks(const string &userName)
     }
 
     return borrowed;
+}
+
+vector<BorrowRecord> LibraryService::getActiveBorrowRecords(const string &userName)
+{
+    return loadBorrowRecords(userName, true);
+}
+
+vector<BorrowRecord> LibraryService::getBorrowHistory(const string &userName)
+{
+    return loadBorrowRecords(userName, false);
 }
 
 int LibraryService::activeIssueCount(const string &userName)

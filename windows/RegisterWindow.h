@@ -2,6 +2,7 @@
 #define REGISTERWINDOW_H
 
 #include <QWidget>
+#include <QResizeEvent>
 #include "../services/AuthService.h"
 
 QT_BEGIN_NAMESPACE

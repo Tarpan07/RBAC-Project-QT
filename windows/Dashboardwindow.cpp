@@ -42,6 +42,11 @@ QString bookSearchText(const Book &book)
 {
     return QString::fromStdString(book.getBookId() + " " + book.getTitle() + " " + book.getAuthor()).toLower();
 }
+
+QString fromStd(const string &value)
+{
+    return QString::fromStdString(value);
+}
 }
 
 DashboardWindow::DashboardWindow(QString userName,
@@ -264,9 +269,31 @@ QWidget *DashboardWindow::buildMyBooksPage()
     scroll->setObjectName("plainScroll");
     scroll->setWidgetResizable(true);
     auto *container = new QWidget;
-    myBooksLayout = new QVBoxLayout(container);
-    myBooksLayout->setContentsMargins(0, 0, 0, 0);
-    myBooksLayout->setSpacing(10);
+    auto *contentLayout = new QVBoxLayout(container);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(12);
+
+    auto *activeCard = makeFrame("panelCard");
+    auto *activeCardLayout = new QVBoxLayout(activeCard);
+    activeCardLayout->setContentsMargins(14, 14, 14, 14);
+    activeCardLayout->setSpacing(10);
+    activeCardLayout->addWidget(makeLabel("Currently Issued", "sectionTitle"));
+    activeBooksLayout = new QVBoxLayout;
+    activeBooksLayout->setSpacing(10);
+    activeCardLayout->addLayout(activeBooksLayout);
+    contentLayout->addWidget(activeCard);
+
+    auto *historyCard = makeFrame("panelCard");
+    auto *historyCardLayout = new QVBoxLayout(historyCard);
+    historyCardLayout->setContentsMargins(14, 14, 14, 14);
+    historyCardLayout->setSpacing(10);
+    historyCardLayout->addWidget(makeLabel("Issue / Return History", "sectionTitle"));
+    historyLayout = new QVBoxLayout;
+    historyLayout->setSpacing(10);
+    historyCardLayout->addLayout(historyLayout);
+    contentLayout->addWidget(historyCard);
+
+    contentLayout->addStretch(1);
     scroll->setWidget(container);
     layout->addWidget(scroll, 1);
     return page;
@@ -366,7 +393,32 @@ QWidget *DashboardWindow::buildUsersPage()
     usersLayout->setContentsMargins(0, 0, 0, 0);
     usersLayout->setSpacing(10);
     scroll->setWidget(container);
-    layout->addWidget(scroll, 1);
+
+    auto *historyCard = makeFrame("panelCard");
+    historyCard->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *historyCardLayout = new QVBoxLayout(historyCard);
+    historyCardLayout->setContentsMargins(14, 14, 14, 14);
+    historyCardLayout->setSpacing(10);
+    selectedUserHistoryTitle = makeLabel("Select a user to view activity history.", "sectionTitle");
+    historyCardLayout->addWidget(selectedUserHistoryTitle);
+
+    auto *historyScroll = new QScrollArea;
+    historyScroll->setObjectName("plainScroll");
+    historyScroll->setWidgetResizable(true);
+    historyScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    historyScroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *historyContainer = new QWidget;
+    userHistoryLayout = new QVBoxLayout(historyContainer);
+    userHistoryLayout->setContentsMargins(0, 0, 0, 0);
+    userHistoryLayout->setSpacing(10);
+    historyScroll->setWidget(historyContainer);
+    historyCardLayout->addWidget(historyScroll, 1);
+
+    auto *contentLayout = new QHBoxLayout;
+    contentLayout->setSpacing(12);
+    contentLayout->addWidget(scroll, 1);
+    contentLayout->addWidget(historyCard, 1);
+    layout->addLayout(contentLayout, 1);
     return page;
 }
 
@@ -479,6 +531,39 @@ QWidget *DashboardWindow::createBorrowedCard(const Book &book)
     return card;
 }
 
+QWidget *DashboardWindow::createBorrowRecordCard(const BorrowRecord &record, bool showUser)
+{
+    auto *card = makeFrame("panelCard");
+    card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    card->setMinimumHeight(showUser ? 132 : 118);
+    auto *layout = new QVBoxLayout(card);
+    layout->setContentsMargins(16, 14, 16, 14);
+    layout->setSpacing(7);
+
+    auto *headerRow = new QHBoxLayout;
+    headerRow->setContentsMargins(0, 0, 0, 0);
+    headerRow->setSpacing(10);
+
+    auto *titleLabel = makeLabel(fromStd(record.title), "historyTitle");
+    headerRow->addWidget(titleLabel, 1);
+
+    auto *statusLabel = makeLabel(fromStd(record.status), "historyStatus");
+    statusLabel->setAlignment(Qt::AlignCenter);
+    headerRow->addWidget(statusLabel, 0, Qt::AlignTop);
+    layout->addLayout(headerRow);
+
+    layout->addWidget(makeLabel("Author: " + fromStd(record.author), "historyMeta"));
+    layout->addWidget(makeLabel("Book ID: " + fromStd(record.bookId), "historyMeta"));
+    if (showUser) {
+        const QString userText = fromStd(record.userName).trimmed().isEmpty()
+                                     ? fromStd(record.userEmail)
+                                     : fromStd(record.userName) + " | " + fromStd(record.userEmail);
+        layout->addWidget(makeLabel("User: " + userText, "historyMeta"));
+    }
+    layout->addWidget(makeLabel(formatRecordTimeline(record), "historyMeta"));
+    return card;
+}
+
 QWidget *DashboardWindow::createUserCard(const QString &name, const QString &email, const QString &role, const QString &studentId)
 {
     auto *card = makeFrame("panelCard");
@@ -495,10 +580,12 @@ QWidget *DashboardWindow::createUserCard(const QString &name, const QString &ema
     selectButton->setObjectName("secondaryButton");
     connect(selectButton, &QPushButton::clicked, this, [this, name, email, role, studentId]() {
         selectedUserEmail = email;
+        selectedUserName = name;
         userNameEdit->setText(name);
         userEmailEdit->setText(email);
         userRoleEdit->setText(role);
         userStudentIdEdit->setText(studentId);
+        refreshUsers(userSearchEdit ? userSearchEdit->text() : QString());
     });
     layout->addWidget(selectButton);
 
@@ -531,7 +618,7 @@ void DashboardWindow::refreshAll()
 
 void DashboardWindow::refreshDashboard()
 {
-    // Delete old container and replace — avoids all nested layout deletion issues
+    // Replace the scroll container to keep refresh logic simple and avoid nested cleanup issues.
     delete dashboardContainer;
     dashboardContainer = new QWidget;
     dashboardScroll->setWidget(dashboardContainer);
@@ -542,6 +629,12 @@ void DashboardWindow::refreshDashboard()
 
     const auto books = libraryService.getAllBooks();
     const auto borrowed = libraryService.getBorrowedBooks(userEmail);
+    const auto activeRecords = canManageUsers()
+                                   ? libraryService.getActiveBorrowRecords()
+                                   : libraryService.getActiveBorrowRecords(userEmail);
+    const auto historyRecords = canManageUsers()
+                                    ? libraryService.getBorrowHistory()
+                                    : libraryService.getBorrowHistory(userEmail);
     QSet<QString> borrowedIds;
     for (const auto &book : borrowed) {
         borrowedIds.insert(QString::fromStdString(book.getBookId()));
@@ -557,11 +650,19 @@ void DashboardWindow::refreshDashboard()
     heroLayout->setContentsMargins(18, 16, 18, 16);
     heroLayout->setSpacing(7);
     heroLayout->addWidget(makeLabel("Welcome back, " + displayName, "heroTitle"));
-    heroLayout->addWidget(makeLabel(
-        "You have " + QString::number(borrowed.size()) + " active issue(s). "
-            + QString::number(availableCopies) + " copies are available across the library.",
-        "heroSubtitle"));
-    heroLayout->addWidget(makeLabel("Track top books and your current issues from here.", "heroSubtitle"));
+    if (canManageUsers()) {
+        heroLayout->addWidget(makeLabel(
+            "There are " + QString::number(activeRecords.size()) + " active issue(s) across the library. "
+                + QString::number(availableCopies) + " copies are available right now.",
+            "heroSubtitle"));
+        heroLayout->addWidget(makeLabel("Monitor issued books and recent user activity from this dashboard.", "heroSubtitle"));
+    } else {
+        heroLayout->addWidget(makeLabel(
+            "You have " + QString::number(borrowed.size()) + " active issue(s). "
+                + QString::number(availableCopies) + " copies are available across the library.",
+            "heroSubtitle"));
+        heroLayout->addWidget(makeLabel("Track top books and your current issues from here.", "heroSubtitle"));
+    }
     dashboardLayout->addWidget(heroCard);
 
     auto *statsRow = new QGridLayout;
@@ -570,8 +671,12 @@ void DashboardWindow::refreshDashboard()
     statsRow->setVerticalSpacing(12);
     statsRow->addWidget(createStatCard(QString::number(books.size()), "Books"), 0, 0);
     statsRow->addWidget(createStatCard(QString::number(availableCopies), "Available Copies"), 0, 1);
-    statsRow->addWidget(createStatCard(QString::number(borrowed.size()), "My Active Issues"), 0, 2);
-    statsRow->addWidget(createStatCard(issueLimitText(), "Issue Limit"), 0, 3);
+    statsRow->addWidget(createStatCard(QString::number(activeRecords.size()),
+                                       canManageUsers() ? "Issued Across Library" : "My Active Issues"), 0, 2);
+    statsRow->addWidget(createStatCard(canManageUsers()
+                                           ? QString::number(historyRecords.size())
+                                           : issueLimitText(),
+                                       canManageUsers() ? "Total Log Entries" : "Issue Limit"), 0, 3);
     for (int i = 0; i < 4; ++i) {
         statsRow->setColumnStretch(i, 1);
     }
@@ -592,7 +697,37 @@ void DashboardWindow::refreshDashboard()
         previewRow->addWidget(makeLabel("No books available.", "bookMeta"), 0, 0);
     }
     dashboardLayout->addLayout(previewRow);
-    dashboardLayout->addWidget(makeLabel("Use Books page for full book list and management.", "bookMeta"));
+
+    if (canManageUsers()) {
+        dashboardLayout->addWidget(makeLabel("Currently Issued Across Users", "sectionTitle"));
+        auto *activeIssuesLayout = new QVBoxLayout;
+        activeIssuesLayout->setSpacing(10);
+        const int activePreviewCount = static_cast<int>(activeRecords.size());
+        if (activePreviewCount == 0) {
+            activeIssuesLayout->addWidget(makeLabel("No books are currently issued.", "bookMeta"));
+        } else {
+            for (int i = 0; i < activePreviewCount; ++i) {
+                activeIssuesLayout->addWidget(createBorrowRecordCard(activeRecords[i], true));
+            }
+        }
+        dashboardLayout->addLayout(activeIssuesLayout);
+
+        dashboardLayout->addWidget(makeLabel("Recent Issue / Return Logs", "sectionTitle"));
+        auto *historyPreviewLayout = new QVBoxLayout;
+        historyPreviewLayout->setSpacing(10);
+        const int historyPreviewCount = static_cast<int>(historyRecords.size());
+        if (historyPreviewCount == 0) {
+            historyPreviewLayout->addWidget(makeLabel("No user activity logged yet.", "bookMeta"));
+        } else {
+            for (int i = 0; i < historyPreviewCount; ++i) {
+                historyPreviewLayout->addWidget(createBorrowRecordCard(historyRecords[i], true));
+            }
+        }
+        dashboardLayout->addLayout(historyPreviewLayout);
+        dashboardLayout->addWidget(makeLabel("Open the Users page to inspect a selected user's full history.", "bookMeta"));
+    } else {
+        dashboardLayout->addWidget(makeLabel("Use Books page for full book list and management.", "bookMeta"));
+    }
     dashboardLayout->addStretch(1);
 }
 
@@ -646,24 +781,38 @@ void DashboardWindow::refreshBooks(const QString &filter)
 
 void DashboardWindow::refreshMyBooks()
 {
-    if (!myBooksLayout) {
+    if (!activeBooksLayout || !historyLayout) {
         return;
     }
 
-    while (auto *item = myBooksLayout->takeAt(0)) {
+    while (auto *item = activeBooksLayout->takeAt(0)) {
+        if (item->widget()) delete item->widget();
+        delete item;
+    }
+    while (auto *item = historyLayout->takeAt(0)) {
         if (item->widget()) delete item->widget();
         delete item;
     }
 
     const auto borrowed = libraryService.getBorrowedBooks(userEmail);
+    const auto history = libraryService.getBorrowHistory(userEmail);
     if (borrowed.empty()) {
-        myBooksLayout->addWidget(makeLabel("No active borrowed books.", "bookMeta"));
+        activeBooksLayout->addWidget(makeLabel("No active borrowed books.", "bookMeta"));
     } else {
         for (const auto &book : borrowed) {
-            myBooksLayout->addWidget(createBorrowedCard(book));
+            activeBooksLayout->addWidget(createBorrowedCard(book));
         }
     }
-    myBooksLayout->addStretch(1);
+    activeBooksLayout->addStretch(1);
+
+    if (history.empty()) {
+        historyLayout->addWidget(makeLabel("No issue or return history yet.", "bookMeta"));
+    } else {
+        for (const auto &record : history) {
+            historyLayout->addWidget(createBorrowRecordCard(record, false));
+        }
+    }
+    historyLayout->addStretch(1);
 }
 
 void DashboardWindow::refreshUsers(const QString &filter)
@@ -692,6 +841,35 @@ void DashboardWindow::refreshUsers(const QString &filter)
         }
     }
     usersLayout->addStretch(1);
+
+    if (!selectedUserHistoryTitle || !userHistoryLayout) {
+        return;
+    }
+
+    while (auto *item = userHistoryLayout->takeAt(0)) {
+        if (item->widget()) delete item->widget();
+        delete item;
+    }
+
+    if (selectedUserEmail.isEmpty()) {
+        selectedUserHistoryTitle->setText("Select a user to view activity history.");
+        userHistoryLayout->addWidget(makeLabel("Choose a user from the list to see all issue and return records.", "bookMeta"));
+        userHistoryLayout->addStretch(1);
+        return;
+    }
+
+    selectedUserHistoryTitle->setText(selectedUserName.isEmpty()
+                                          ? "User Activity History"
+                                          : selectedUserName + " - Activity History");
+    const auto selectedHistory = libraryService.getBorrowHistory(selectedUserEmail.toStdString());
+    if (selectedHistory.empty()) {
+        userHistoryLayout->addWidget(makeLabel("No issue or return history found for this user.", "bookMeta"));
+    } else {
+        for (const auto &record : selectedHistory) {
+            userHistoryLayout->addWidget(createBorrowRecordCard(record, false));
+        }
+    }
+    userHistoryLayout->addStretch(1);
 }
 
 void DashboardWindow::refreshProfile()
@@ -793,7 +971,11 @@ void DashboardWindow::handleUserUpdate()
     query.addBindValue(role);
     query.addBindValue(userStudentIdEdit->text().trimmed());
     query.addBindValue(selectedUserEmail);
-    statusLabel->setText(query.exec() && query.numRowsAffected() > 0 ? "User updated." : "Could not update user.");
+    const bool updated = query.exec() && query.numRowsAffected() > 0;
+    if (updated) {
+        selectedUserName = userNameEdit->text().trimmed();
+    }
+    statusLabel->setText(updated ? "User updated." : "Could not update user.");
     refreshAll();
 }
 
@@ -819,6 +1001,7 @@ void DashboardWindow::handleUserDelete()
     statusLabel->setText(query.exec() && query.numRowsAffected() > 0 ? "User deleted." : "Could not delete user.");
 
     selectedUserEmail.clear();
+    selectedUserName.clear();
     userNameEdit->clear();
     userEmailEdit->clear();
     userRoleEdit->clear();
@@ -890,6 +1073,17 @@ bool DashboardWindow::canManageUsers() const
 QString DashboardWindow::normalizeRole(const QString &role) const
 {
     return role.trimmed().toUpper();
+}
+
+QString DashboardWindow::formatRecordTimeline(const BorrowRecord &record) const
+{
+    QString timeline = "Issued: " + fromStd(record.issueDate);
+    if (!record.returnDate.empty()) {
+        timeline += " | Returned: " + fromStd(record.returnDate);
+    } else {
+        timeline += " | Returned: Pending";
+    }
+    return timeline;
 }
 
 void DashboardWindow::applyTheme()
@@ -967,6 +1161,26 @@ void DashboardWindow::applyTheme()
             color: #6c6458;
             font-size: 13px;
             font-weight: 700;
+        }
+        QLabel#historyTitle {
+            color: #23201b;
+            font-family: Georgia;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        QLabel#historyMeta {
+            color: #6c6458;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        QLabel#historyStatus {
+            background: rgba(236, 224, 201, 225);
+            color: #0f3f31;
+            border-radius: 10px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            min-width: 72px;
         }
         QLabel#bookMetaFeatured {
             color: #e4ede7;
