@@ -38,7 +38,7 @@
          <property name="bottomMargin"><number>30</number></property>
          <item><widget class="QLabel" name="eyebrowLabel"><property name="text"><string>Role-aware onboarding  Secure account creation</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
          <item><widget class="QLabel" name="heroTitleLabel"><property name="text"><string>Create your library identity</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-         <item><widget class="QLabel" name="heroCopyLabel"><property name="text"><string>Use the redesigned registration page while keeping the same validation rules for role selection, email checks, and password strength.</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+         <item><widget class="QLabel" name="heroCopyLabel"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
          <item>
           <widget class="QFrame" name="orbitFrame">
            <property name="minimumSize"><size><width>0</width><height>380</height></size></property>
@@ -116,7 +116,7 @@
              </widget>
             </item>
             <item><widget class="QLabel" name="titleLabel"><property name="text"><string>Create account</string></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-            <item><widget class="QLabel" name="subtitleLabel"><property name="text"><string>Register on a dedicated screen, with the same backend validation rules preserved under the hood.</string></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+            <item><widget class="QLabel" name="subtitleLabel"><property name="text"><string/></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="wordWrap"><bool>true</bool></property></widget></item>
             <item><widget class="QLabel" name="nameLabel"><property name="text"><string>Full name</string></property></widget></item>
             <item><widget class="QLineEdit" name="nameEdit"><property name="minimumSize"><size><width>0</width><height>52</height></size></property><property name="placeholderText"><string>Your name</string></property></widget></item>
             <item><widget class="QLabel" name="emailLabel"><property name="text"><string>Email</string></property></widget></item>
